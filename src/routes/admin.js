@@ -13,30 +13,57 @@ const router = Router();
 router.post('/migrate', async (req, res) => {
     try {
         console.log('🔄 Running database migrations...');
-        
-        // Remove default values from JSON columns if they exist
-        // MySQL/MariaDB doesn't support JSON objects as default values
+
+        // Create tables using raw SQL - MariaDB compatible
+        // Don't use sequelize.sync() - it causes issues with JSON defaults
         try {
+            // Create users table
             await sequelize.query(`
-                ALTER TABLE projects 
-                MODIFY COLUMN notification_settings JSON NULL
+                CREATE TABLE IF NOT EXISTS users (
+                    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+                    email VARCHAR(255) NOT NULL UNIQUE,
+                    password VARCHAR(255) NOT NULL,
+                    first_name VARCHAR(255) NOT NULL,
+                    last_name VARCHAR(255) NOT NULL,
+                    role_name VARCHAR(50) DEFAULT 'user',
+                    is_active BOOLEAN DEFAULT TRUE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             `);
-            console.log('✅ Fixed notification_settings column');
+            console.log('✅ Users table ready');
+
+            // Create projects table
+            await sequelize.query(`
+                CREATE TABLE IF NOT EXISTS projects (
+                    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+                    name VARCHAR(255) NOT NULL,
+                    project_number VARCHAR(255) NOT NULL,
+                    address VARCHAR(255) NOT NULL,
+                    city VARCHAR(255) NOT NULL,
+                    postal_code VARCHAR(255) NOT NULL,
+                    country VARCHAR(255) DEFAULT 'Deutschland',
+                    is_active BOOLEAN DEFAULT TRUE,
+                    latitude DOUBLE,
+                    longitude DOUBLE,
+                    customer_id CHAR(36),
+                    notification_settings JSON,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `);
+            console.log('✅ Projects table ready');
+
         } catch (e) {
-            // Column might not exist yet, that's okay
-            if (!e.message.includes("doesn't exist") && !e.message.includes("Unknown column")) {
-                console.warn('⚠️ Could not fix notification_settings:', e.message);
-            }
+            console.warn('⚠️ Table creation warning:', e.message);
         }
-        
-        // Don't use sequelize.sync() - it tries to alter columns even with alter: false
-        // The SQL migrations already create the tables correctly
-        // Just verify the connection works
+
+        // Verify connection works
         await sequelize.authenticate();
         console.log('✅ Database connection verified');
-        
+
         console.log('✅ Migrations completed successfully');
-        
+
         res.json({
             success: true,
             message: 'Database migrations completed successfully',
