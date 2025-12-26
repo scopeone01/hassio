@@ -26,6 +26,8 @@ import notificationsRouter from './routes/notifications.js';
 import ticketsRouter from './routes/tickets.js';
 import adminRouter from './routes/admin.js';
 
+console.log('📦 All routes imported, adminRouter:', adminRouter ? '✅ loaded' : '❌ missing');
+
 // Load environment variables
 dotenv.config();
 
@@ -124,8 +126,18 @@ app.use(`/api/${API_VERSION}/projects`, projectRolesRouter);
 app.use(`/api/${API_VERSION}/projects`, projectMembersRouter);
 app.use(`/api/${API_VERSION}/notifications`, notificationsRouter);
 app.use(`/api/${API_VERSION}/tickets`, ticketsRouter);
-app.use(`/api/${API_VERSION}/admin`, adminRouter);
-console.log(`✅ Admin routes registered at /api/${API_VERSION}/admin`);
+
+// Register admin routes with error handling
+try {
+    if (adminRouter) {
+        app.use(`/api/${API_VERSION}/admin`, adminRouter);
+        console.log(`✅ Admin routes registered at /api/${API_VERSION}/admin`);
+    } else {
+        console.error('❌ Admin router is undefined!');
+    }
+} catch (error) {
+    console.error('❌ Failed to register admin routes:', error);
+}
 
 // 404 handler (registered after dynamic routes)
 function register404Handler() {
