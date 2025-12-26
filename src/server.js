@@ -24,6 +24,7 @@ import projectRolesRouter from './routes/projectRoles.js';
 import projectMembersRouter from './routes/projectMembers.js';
 import notificationsRouter from './routes/notifications.js';
 import ticketsRouter from './routes/tickets.js';
+import adminRouter from './routes/admin.js';
 
 // Load environment variables
 dotenv.config();
@@ -123,6 +124,7 @@ app.use(`/api/${API_VERSION}/projects`, projectRolesRouter);
 app.use(`/api/${API_VERSION}/projects`, projectMembersRouter);
 app.use(`/api/${API_VERSION}/notifications`, notificationsRouter);
 app.use(`/api/${API_VERSION}/tickets`, ticketsRouter);
+app.use(`/api/${API_VERSION}/admin`, adminRouter);
 
 // 404 handler (registered after dynamic routes)
 function register404Handler() {
