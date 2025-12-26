@@ -1,6 +1,6 @@
 {
   "name": "FacilityMaster API",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "slug": "facilitymaster-api",
   "description": "Backend API Server for FacilityMaster iOS App",
   "url": "https://github.com/scopeone01/hassio",
