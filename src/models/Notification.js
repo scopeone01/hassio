@@ -32,7 +32,7 @@ const Notification = sequelize.define('notifications', {
     },
     channels: {
         type: DataTypes.JSON,
-        defaultValue: () => JSON.stringify(['push'])
+        allowNull: true,
     },
     isRead: {
         type: DataTypes.BOOLEAN,
@@ -70,7 +70,14 @@ const Notification = sequelize.define('notifications', {
 }, {
     tableName: 'notifications',
     timestamps: false,
-    underscored: true
+    underscored: true,
+    hooks: {
+        beforeCreate: (notification) => {
+            if (!notification.channels) {
+                notification.channels = ['push'];
+            }
+        },
+    },
 });
 
 // Instance methods

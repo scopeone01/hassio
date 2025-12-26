@@ -29,21 +29,11 @@ const ProjectRole = sequelize.define('project_roles', {
     },
     permissions: {
         type: DataTypes.JSON,
-        defaultValue: () => JSON.stringify({
-            canCreateTickets: true,
-            canEditTickets: true,
-            canAssignTickets: false,
-            canDeleteTickets: false,
-            canViewAllTickets: false,
-            canApproveWorkflows: false,
-            canManageTemplates: false,
-            canExportData: false,
-            canManageUsers: false
-        })
+        allowNull: true,
     },
     specialization: {
         type: DataTypes.JSON,
-        defaultValue: () => JSON.stringify([])
+        allowNull: true,
     },
     skillLevel: {
         type: DataTypes.STRING(50),
@@ -74,7 +64,27 @@ const ProjectRole = sequelize.define('project_roles', {
 }, {
     tableName: 'project_roles',
     timestamps: true,
-    underscored: true
+    underscored: true,
+    hooks: {
+        beforeCreate: (role) => {
+            if (!role.permissions) {
+                role.permissions = {
+                    canCreateTickets: true,
+                    canEditTickets: true,
+                    canAssignTickets: false,
+                    canDeleteTickets: false,
+                    canViewAllTickets: false,
+                    canApproveWorkflows: false,
+                    canManageTemplates: false,
+                    canExportData: false,
+                    canManageUsers: false
+                };
+            }
+            if (!role.specialization) {
+                role.specialization = [];
+            }
+        },
+    },
 });
 
 // Instance methods

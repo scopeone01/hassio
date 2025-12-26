@@ -49,14 +49,7 @@ const Project = sequelize.define('Project', {
   },
   notificationSettings: {
     type: DataTypes.JSON,
-    defaultValue: () => JSON.stringify({
-      notifyOnNewTicket: true,
-      notifyOnAssignment: true,
-      notifyOnStatusChange: true,
-      notifyOnComment: true,
-      notifyOnSlaWarning: true,
-      emailDigestFrequency: 'Daily',
-    }),
+    allowNull: true,
   },
   createdAt: {
     type: DataTypes.DATE,
@@ -71,6 +64,18 @@ const Project = sequelize.define('Project', {
   timestamps: true,
   underscored: true,
   hooks: {
+    beforeCreate: (project) => {
+      if (!project.notificationSettings) {
+        project.notificationSettings = {
+          notifyOnNewTicket: true,
+          notifyOnAssignment: true,
+          notifyOnStatusChange: true,
+          notifyOnComment: true,
+          notifyOnSlaWarning: true,
+          emailDigestFrequency: 'Daily',
+        };
+      }
+    },
     beforeUpdate: (project) => {
       project.updatedAt = new Date();
     },

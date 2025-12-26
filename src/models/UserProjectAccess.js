@@ -68,7 +68,7 @@ const UserProjectAccess = sequelize.define('user_project_access', {
     },
     notificationChannels: {
         type: DataTypes.JSON,
-        defaultValue: () => JSON.stringify(['push']),
+        allowNull: true,
         field: 'notification_channels'
     },
     grantedAt: {
@@ -82,7 +82,14 @@ const UserProjectAccess = sequelize.define('user_project_access', {
 }, {
     tableName: 'user_project_access',
     timestamps: false,
-    underscored: true
+    underscored: true,
+    hooks: {
+        beforeCreate: (access) => {
+            if (!access.notificationChannels) {
+                access.notificationChannels = ['push'];
+            }
+        },
+    },
 });
 
 // Instance methods
