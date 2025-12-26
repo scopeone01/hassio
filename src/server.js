@@ -125,6 +125,7 @@ app.use(`/api/${API_VERSION}/projects`, projectMembersRouter);
 app.use(`/api/${API_VERSION}/notifications`, notificationsRouter);
 app.use(`/api/${API_VERSION}/tickets`, ticketsRouter);
 app.use(`/api/${API_VERSION}/admin`, adminRouter);
+console.log(`✅ Admin routes registered at /api/${API_VERSION}/admin`);
 
 // 404 handler (registered after dynamic routes)
 function register404Handler() {
