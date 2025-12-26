@@ -1,0 +1,9 @@
+database_host: core-mariadb
+database_port: 3306
+database_name: facility_master
+database_user: facilitymaster
+database_password: Ratlos05301
+jwt_secret: ""
+auto_migrate: false
+custom_routes: []
+
