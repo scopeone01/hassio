@@ -67,8 +67,8 @@ const UserProjectAccess = sequelize.define('user_project_access', {
         field: 'receive_notifications'
     },
     notificationChannels: {
-        type: DataTypes.JSONB,
-        defaultValue: ['push'],
+        type: DataTypes.JSON,
+        defaultValue: () => JSON.stringify(['push']),
         field: 'notification_channels'
     },
     grantedAt: {

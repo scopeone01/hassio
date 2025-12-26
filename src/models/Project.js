@@ -48,15 +48,15 @@ const Project = sequelize.define('Project', {
     allowNull: true,
   },
   notificationSettings: {
-    type: DataTypes.JSONB,
-    defaultValue: {
+    type: DataTypes.JSON,
+    defaultValue: () => JSON.stringify({
       notifyOnNewTicket: true,
       notifyOnAssignment: true,
       notifyOnStatusChange: true,
       notifyOnComment: true,
       notifyOnSlaWarning: true,
       emailDigestFrequency: 'Daily',
-    },
+    }),
   },
   createdAt: {
     type: DataTypes.DATE,

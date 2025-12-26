@@ -28,8 +28,8 @@ const ProjectRole = sequelize.define('project_roles', {
         defaultValue: 'person.fill'
     },
     permissions: {
-        type: DataTypes.JSONB,
-        defaultValue: {
+        type: DataTypes.JSON,
+        defaultValue: () => JSON.stringify({
             canCreateTickets: true,
             canEditTickets: true,
             canAssignTickets: false,
@@ -39,11 +39,11 @@ const ProjectRole = sequelize.define('project_roles', {
             canManageTemplates: false,
             canExportData: false,
             canManageUsers: false
-        }
+        })
     },
     specialization: {
-        type: DataTypes.ARRAY(DataTypes.TEXT),
-        defaultValue: []
+        type: DataTypes.JSON,
+        defaultValue: () => JSON.stringify([])
     },
     skillLevel: {
         type: DataTypes.STRING(50),
@@ -51,7 +51,7 @@ const ProjectRole = sequelize.define('project_roles', {
         field: 'skill_level'
     },
     workingHours: {
-        type: DataTypes.JSONB,
+        type: DataTypes.JSON,
         field: 'working_hours'
     },
     maxConcurrentTickets: {

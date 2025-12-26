@@ -28,11 +28,11 @@ const Notification = sequelize.define('notifications', {
         type: DataTypes.TEXT
     },
     data: {
-        type: DataTypes.JSONB
+        type: DataTypes.JSON
     },
     channels: {
-        type: DataTypes.ARRAY(DataTypes.TEXT),
-        defaultValue: ['push']
+        type: DataTypes.JSON,
+        defaultValue: () => JSON.stringify(['push'])
     },
     isRead: {
         type: DataTypes.BOOLEAN,
