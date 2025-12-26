@@ -1,0 +1,57 @@
+{
+  "name": "FacilityMaster API",
+  "version": "1.0.0",
+  "slug": "facilitymaster-api",
+  "description": "Backend API Server für FacilityMaster iOS App mit MariaDB Unterstützung",
+  "url": "https://github.com/scopeone/facility-master-api",
+  "arch": ["aarch64", "amd64", "armv7", "armhf", "i386"],
+  "startup": "application",
+  "boot": "auto",
+  "init": false,
+  "watchdog": "tcp://[HOST]:3000",
+  "ports": {
+    "3000/tcp": 3000
+  },
+  "ports_description": {
+    "3000/tcp": "API Server (HTTP)"
+  },
+  "host_network": false,
+  "services": ["mysql:want"],
+  "options": {
+    "log_level": "info",
+    "database_host": "core-mariadb",
+    "database_port": 3306,
+    "database_name": "facility_master",
+    "database_user": "facilitymaster",
+    "database_password": "",
+    "jwt_secret": "",
+    "jwt_expires_in": "24h",
+    "auto_migrate": true,
+    "auto_seed_demo_data": false
+  },
+  "schema": {
+    "log_level": "list(trace|debug|info|warning|error|fatal)?",
+    "database_host": "str",
+    "database_port": "port",
+    "database_name": "str",
+    "database_user": "str",
+    "database_password": "password",
+    "jwt_secret": "password",
+    "jwt_expires_in": "str",
+    "auto_migrate": "bool",
+    "auto_seed_demo_data": "bool"
+  },
+  "environment": {
+    "LOG_LEVEL": "log_level"
+  },
+  "panel_icon": "mdi:office-building",
+  "panel_title": "FacilityMaster",
+  "panel_admin": true,
+  "ingress": true,
+  "ingress_port": 3000,
+  "ingress_stream": false,
+  "map": ["share:rw", "ssl:ro"],
+  "tmpfs": "size=64m,uid=0",
+  "image": "ghcr.io/scopeone/facilitymaster-api-{arch}"
+}
+
