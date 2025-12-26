@@ -14,8 +14,25 @@ router.post('/migrate', async (req, res) => {
     try {
         console.log('🔄 Running database migrations...');
         
+        // Remove default values from JSON columns if they exist
+        // MySQL/MariaDB doesn't support JSON objects as default values
+        try {
+            await sequelize.query(`
+                ALTER TABLE projects 
+                MODIFY COLUMN notification_settings JSON NULL
+            `);
+            console.log('✅ Fixed notification_settings column');
+        } catch (e) {
+            // Column might not exist yet, that's okay
+            if (!e.message.includes("doesn't exist")) {
+                console.warn('⚠️ Could not fix notification_settings:', e.message);
+            }
+        }
+        
         // Sync all models with database
-        await sequelize.sync({ alter: true });
+        // Use alter: false to avoid changing existing columns with JSON defaults
+        // The SQL migrations already create the tables correctly
+        await sequelize.sync({ alter: false });
         
         console.log('✅ Migrations completed successfully');
         
