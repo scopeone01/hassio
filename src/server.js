@@ -7,6 +7,8 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import fs from 'fs';
 
+console.log('📦 Core modules imported');
+
 // Import database config
 import sequelize, { testConnection } from './config/database.js';
 
@@ -128,15 +130,20 @@ app.use(`/api/${API_VERSION}/notifications`, notificationsRouter);
 app.use(`/api/${API_VERSION}/tickets`, ticketsRouter);
 
 // Register admin routes with error handling
+console.log('🔧 Attempting to register admin routes...');
+console.log('🔧 adminRouter type:', typeof adminRouter);
+console.log('🔧 adminRouter value:', adminRouter);
+
 try {
     if (adminRouter) {
         app.use(`/api/${API_VERSION}/admin`, adminRouter);
         console.log(`✅ Admin routes registered at /api/${API_VERSION}/admin`);
     } else {
-        console.error('❌ Admin router is undefined!');
+        console.error('❌ Admin router is undefined or null!');
     }
 } catch (error) {
     console.error('❌ Failed to register admin routes:', error);
+    console.error('❌ Error stack:', error.stack);
 }
 
 // 404 handler (registered after dynamic routes)
