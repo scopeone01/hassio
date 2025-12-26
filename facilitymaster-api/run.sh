@@ -1,63 +1,40 @@
-#!/usr/bin/with-contenv bashio
-# ==============================================================================
-# FacilityMaster API - s6 Service Script
-# ==============================================================================
+#!/bin/bash
+set -e
 
-CONFIG_PATH=/data/options.json
+CONFIG=/data/options.json
 
-bashio::log.info "Loading configuration..."
+echo "[FacilityMaster] Starting..."
 
-# Read config
-DB_HOST=$(bashio::config 'database_host')
-DB_PORT=$(bashio::config 'database_port')
-DB_NAME=$(bashio::config 'database_name')
-DB_USER=$(bashio::config 'database_user')
-DB_PASSWORD=$(bashio::config 'database_password')
-JWT_SECRET=$(bashio::config 'jwt_secret')
-AUTO_MIGRATE=$(bashio::config 'auto_migrate')
-
-# Export for Node.js
-export DB_HOST DB_PORT DB_NAME DB_USER DB_PASSWORD JWT_SECRET
+# Load config with defaults
+export DB_HOST=$(jq -r '.database_host // "core-mariadb"' $CONFIG 2>/dev/null || echo "core-mariadb")
+export DB_PORT=$(jq -r '.database_port // 3306' $CONFIG 2>/dev/null || echo "3306")
+export DB_NAME=$(jq -r '.database_name // "facility_master"' $CONFIG 2>/dev/null || echo "facility_master")
+export DB_USER=$(jq -r '.database_user // "facilitymaster"' $CONFIG 2>/dev/null || echo "facilitymaster")
+export DB_PASSWORD=$(jq -r '.database_password // ""' $CONFIG 2>/dev/null || echo "")
+export JWT_SECRET=$(jq -r '.jwt_secret // ""' $CONFIG 2>/dev/null || echo "")
+export AUTO_MIGRATE=$(jq -r '.auto_migrate // true' $CONFIG 2>/dev/null || echo "true")
+export CUSTOM_ROUTES=$(jq -c '.custom_routes // []' $CONFIG 2>/dev/null || echo "[]")
 export NODE_ENV=production
 export PORT=3000
 
-# Export custom routes
-if bashio::config.exists 'custom_routes'; then
-    export CUSTOM_ROUTES=$(bashio::config 'custom_routes' | jq -c '.')
-else
-    export CUSTOM_ROUTES="[]"
-fi
+# Generate JWT if empty
+[ -z "$JWT_SECRET" ] && export JWT_SECRET=$(head -c 64 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | head -c 64)
 
-# Generate JWT secret if empty
-if [ -z "$JWT_SECRET" ]; then
-    bashio::log.warning "No JWT secret, generating..."
-    export JWT_SECRET=$(head -c 32 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | head -c 64)
-fi
-
-bashio::log.info "Database: ${DB_USER}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
+echo "[FacilityMaster] DB: $DB_USER@$DB_HOST:$DB_PORT/$DB_NAME"
 
 # Wait for MariaDB
-bashio::log.info "Waiting for MariaDB..."
-timeout=60
-counter=0
-while ! nc -z "$DB_HOST" "$DB_PORT" 2>/dev/null; do
-    counter=$((counter + 1))
-    if [ $counter -ge $timeout ]; then
-        bashio::log.error "MariaDB timeout!"
-        exit 1
-    fi
+echo "[FacilityMaster] Waiting for MariaDB..."
+for i in $(seq 1 60); do
+    nc -z "$DB_HOST" "$DB_PORT" 2>/dev/null && break
+    [ $i -eq 60 ] && echo "[ERROR] MariaDB timeout" && exit 1
     sleep 1
 done
-bashio::log.info "MariaDB ready!"
-sleep 2
+echo "[FacilityMaster] MariaDB ready"
 
-# Run migrations
-if [ "$AUTO_MIGRATE" = "true" ]; then
-    bashio::log.info "Running migrations..."
-    cd /app && node src/config/migrate.js || bashio::log.warning "Migration warnings"
-fi
+# Migrate
+[ "$AUTO_MIGRATE" = "true" ] && cd /app && node src/config/migrate.js || true
 
-# Start server
-bashio::log.info "Starting FacilityMaster API on port 3000..."
+# Start
+echo "[FacilityMaster] Starting API server on port 3000..."
 cd /app
 exec node src/server.js

@@ -1,10 +1,11 @@
 {
   "name": "FacilityMaster API",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "slug": "facilitymaster-api",
   "description": "Backend API Server with Dynamic Custom Routes",
   "url": "https://github.com/scopeone01/hassio",
   "arch": ["aarch64", "amd64", "armv7", "armhf", "i386"],
+  "init": false,
   "startup": "application",
   "boot": "auto",
   "ports": {
@@ -18,22 +19,7 @@
     "database_password": "",
     "jwt_secret": "",
     "auto_migrate": true,
-    "custom_routes": [
-      {
-        "path": "/sensoren",
-        "table": "sensoren",
-        "methods": ["GET", "POST", "PUT", "DELETE"],
-        "fields": [
-          {"name": "name", "type": "string", "required": true},
-          {"name": "typ", "type": "string"},
-          {"name": "standort", "type": "string"},
-          {"name": "wert", "type": "float"},
-          {"name": "einheit", "type": "string"},
-          {"name": "aktiv", "type": "boolean", "default": true}
-        ],
-        "seed": []
-      }
-    ]
+    "custom_routes": []
   },
   "schema": {
     "database_host": "str",
@@ -43,22 +29,6 @@
     "database_password": "password",
     "jwt_secret": "password",
     "auto_migrate": "bool",
-    "custom_routes": [
-      {
-        "path": "str",
-        "table": "str",
-        "methods": ["str"],
-        "fields": [
-          {
-            "name": "str",
-            "type": "list(string|text|integer|float|decimal|boolean|date|datetime|json|uuid)",
-            "required": "bool?",
-            "default": "match(.*)?",
-            "length": "int?"
-          }
-        ],
-        "seed": ["match(.*)?"]
-      }
-    ]
+    "custom_routes": ["match(.*)"]
   }
 }
