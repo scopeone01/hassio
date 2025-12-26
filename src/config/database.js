@@ -20,16 +20,8 @@ const sequelize = new Sequelize({
     define: {
         timestamps: true,
         underscored: true,
-        freezeTableName: true
-    },
-    dialectOptions: {
-        // MariaDB/MySQL specific options
-        charset: 'utf8mb4',
-        collate: 'utf8mb4_unicode_ci',
-        // Enable for SSL connections if needed
-        // ssl: {
-        //     rejectUnauthorized: false
-        // }
+        freezeTableName: true,
+        charset: 'utf8mb4'
     }
 });
 
