@@ -24,15 +24,16 @@ router.post('/migrate', async (req, res) => {
             console.log('✅ Fixed notification_settings column');
         } catch (e) {
             // Column might not exist yet, that's okay
-            if (!e.message.includes("doesn't exist")) {
+            if (!e.message.includes("doesn't exist") && !e.message.includes("Unknown column")) {
                 console.warn('⚠️ Could not fix notification_settings:', e.message);
             }
         }
         
-        // Sync all models with database
-        // Use alter: false to avoid changing existing columns with JSON defaults
+        // Don't use sequelize.sync() - it tries to alter columns even with alter: false
         // The SQL migrations already create the tables correctly
-        await sequelize.sync({ alter: false });
+        // Just verify the connection works
+        await sequelize.authenticate();
+        console.log('✅ Database connection verified');
         
         console.log('✅ Migrations completed successfully');
         
