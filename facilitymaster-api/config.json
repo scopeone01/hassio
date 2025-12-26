@@ -1,6 +1,6 @@
 {
   "name": "FacilityMaster API",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "slug": "facilitymaster-api",
   "description": "Backend API Server with Dynamic Custom Routes",
   "url": "https://github.com/scopeone01/hassio",

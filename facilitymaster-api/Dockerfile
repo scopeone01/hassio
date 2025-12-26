@@ -1,7 +1,7 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
-# Install Node.js 20 LTS and tools
+# Install Node.js and tools
 RUN apk add --no-cache \
     nodejs \
     npm \
@@ -14,32 +14,24 @@ RUN apk add --no-cache \
 # Set working directory
 WORKDIR /app
 
-# Clone the API server from the repository
+# Clone the API server
 RUN git clone --depth 1 https://github.com/scopeone01/hassio.git /tmp/repo && \
     cp -r /tmp/repo/package*.json /app/ && \
     cp -r /tmp/repo/src /app/ && \
     rm -rf /tmp/repo
 
-# Install production dependencies only
+# Install dependencies
 RUN npm ci --only=production --ignore-scripts
 
-# Copy startup script
-COPY run.sh /run.sh
-RUN chmod a+x /run.sh
+# Copy run script to s6 service directory
+RUN mkdir -p /etc/services.d/facilitymaster
+COPY run.sh /etc/services.d/facilitymaster/run
+RUN chmod a+x /etc/services.d/facilitymaster/run
 
-# Expose API port
+# Expose port
 EXPOSE 3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:3000/health || exit 1
-
 # Labels
-LABEL \
-    io.hass.name="FacilityMaster API" \
-    io.hass.description="Backend API Server" \
-    io.hass.type="addon" \
-    io.hass.version="1.0.1"
-
-# Run startup script
-CMD ["/run.sh"]
+LABEL io.hass.version="1.0.3" \
+      io.hass.type="addon" \
+      io.hass.name="FacilityMaster API"
