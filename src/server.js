@@ -5,12 +5,16 @@ import compression from 'compression';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+import fs from 'fs';
 
 // Import database config
 import sequelize, { testConnection } from './config/database.js';
 
 // Import models to register associations
 import './models/associations.js';
+
+// Import dynamic route service
+import dynamicRouteService from './services/dynamicRouteService.js';
 
 // Import routes
 import authRouter from './routes/auth.js';
@@ -28,6 +32,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const API_VERSION = process.env.API_VERSION || 'v1';
 
+// Store for dynamic routes info
+let dynamicRoutesInfo = [];
+
 // ==========================================
 // Middleware
 // ==========================================
@@ -35,17 +42,16 @@ const API_VERSION = process.env.API_VERSION || 'v1';
 // Security
 app.use(helmet());
 
-// CORS
+// CORS - allow all origins for Home Assistant
 const corsOptions = {
-    origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3001', 'http://localhost:5173'],
-    credentials: process.env.CORS_CREDENTIALS === 'true'
+    origin: '*',
+    credentials: true
 };
 app.use(cors(corsOptions));
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-// Note: For multipart/form-data (file uploads), we'll use multer in specific routes
 
 // Compression
 app.use(compression());
@@ -60,7 +66,7 @@ if (process.env.NODE_ENV === 'development') {
 // Rate limiting
 const limiter = rateLimit({
     windowMs: (process.env.RATE_LIMIT_WINDOW || 15) * 60 * 1000,
-    max: process.env.RATE_LIMIT_MAX_REQUESTS || 100,
+    max: process.env.RATE_LIMIT_MAX_REQUESTS || 1000,
     message: 'Too many requests from this IP, please try again later.'
 });
 app.use(`/api/${API_VERSION}`, limiter);
@@ -75,7 +81,8 @@ app.get('/health', (req, res) => {
         status: 'ok',
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
-        environment: process.env.NODE_ENV || 'development'
+        environment: process.env.NODE_ENV || 'development',
+        dynamicRoutes: dynamicRoutesInfo.length
     });
 });
 
@@ -84,34 +91,49 @@ app.get(`/api/${API_VERSION}`, (req, res) => {
     res.json({
         name: 'Facility Master API',
         version: API_VERSION,
-        description: 'Enterprise Facility Management Backend with Multi-Tenancy',
+        description: 'Enterprise Facility Management Backend with Dynamic Routes',
         documentation: `/api/${API_VERSION}/docs`,
         endpoints: {
-            projectRoles: `/api/${API_VERSION}/projects/:projectId/roles`,
-            projectMembers: `/api/${API_VERSION}/projects/:projectId/members`,
+            auth: `/api/${API_VERSION}/auth`,
+            users: `/api/${API_VERSION}/users`,
+            projects: `/api/${API_VERSION}/projects`,
+            tickets: `/api/${API_VERSION}/tickets`,
             notifications: `/api/${API_VERSION}/notifications`,
-            tickets: `/api/${API_VERSION}/tickets/:ticketId/assign`,
+            dynamicRoutes: `/api/${API_VERSION}/dynamic-routes`,
             health: '/health'
-        }
+        },
+        dynamicRoutes: dynamicRoutesInfo
+    });
+});
+
+// Dynamic routes schema endpoint
+app.get(`/api/${API_VERSION}/dynamic-routes`, (req, res) => {
+    res.json({
+        success: true,
+        routes: dynamicRoutesInfo,
+        schema: dynamicRouteService.getSchema()
     });
 });
 
 // API routes
 app.use(`/api/${API_VERSION}/auth`, authRouter);
 app.use(`/api/${API_VERSION}/users`, usersRouter);
-app.use(`/api/${API_VERSION}/projects`, projectsRouter); // Must be before other project routes
+app.use(`/api/${API_VERSION}/projects`, projectsRouter);
 app.use(`/api/${API_VERSION}/projects`, projectRolesRouter);
 app.use(`/api/${API_VERSION}/projects`, projectMembersRouter);
 app.use(`/api/${API_VERSION}/notifications`, notificationsRouter);
 app.use(`/api/${API_VERSION}/tickets`, ticketsRouter);
 
-// 404 handler
-app.use((req, res) => {
-    res.status(404).json({
-        success: false,
-        error: 'Endpoint not found'
+// 404 handler (registered after dynamic routes)
+function register404Handler() {
+    app.use((req, res) => {
+        res.status(404).json({
+            success: false,
+            error: 'Endpoint not found',
+            path: req.path
+        });
     });
-});
+}
 
 // Error handler
 app.use((err, req, res, next) => {
@@ -122,6 +144,75 @@ app.use((err, req, res, next) => {
         ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });
 });
+
+// ==========================================
+// Load Custom Routes from Config
+// ==========================================
+
+async function loadCustomRoutes() {
+    // Check for custom routes in environment variable (JSON string)
+    const customRoutesEnv = process.env.CUSTOM_ROUTES;
+    
+    // Or load from file
+    const configPath = '/data/options.json';
+    
+    let customRoutes = [];
+    
+    // Try environment variable first
+    if (customRoutesEnv) {
+        try {
+            customRoutes = JSON.parse(customRoutesEnv);
+            console.log(`📦 Loaded ${customRoutes.length} custom routes from environment`);
+        } catch (e) {
+            console.warn('⚠️ Failed to parse CUSTOM_ROUTES environment variable');
+        }
+    }
+    
+    // Try Home Assistant options.json
+    if (customRoutes.length === 0 && fs.existsSync(configPath)) {
+        try {
+            const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+            if (config.custom_routes && Array.isArray(config.custom_routes)) {
+                customRoutes = config.custom_routes;
+                console.log(`📦 Loaded ${customRoutes.length} custom routes from options.json`);
+            }
+        } catch (e) {
+            console.warn('⚠️ Failed to load custom routes from options.json');
+        }
+    }
+    
+    // Try local config file for development
+    const localConfigPath = './custom-routes.json';
+    if (customRoutes.length === 0 && fs.existsSync(localConfigPath)) {
+        try {
+            customRoutes = JSON.parse(fs.readFileSync(localConfigPath, 'utf8'));
+            console.log(`📦 Loaded ${customRoutes.length} custom routes from local config`);
+        } catch (e) {
+            console.warn('⚠️ Failed to load custom routes from local config');
+        }
+    }
+    
+    if (customRoutes.length > 0) {
+        const routes = await dynamicRouteService.initializeRoutes(customRoutes);
+        
+        // Register dynamic routes
+        for (const { path, router, config } of routes) {
+            const fullPath = `/api/${API_VERSION}${path}`;
+            app.use(fullPath, router);
+            
+            dynamicRoutesInfo.push({
+                path: fullPath,
+                table: config.table,
+                methods: config.methods || ['GET', 'POST', 'PUT', 'DELETE'],
+                fields: (config.fields || []).map(f => ({ name: f.name, type: f.type }))
+            });
+            
+            console.log(`   🛣️  Registered: ${fullPath}`);
+        }
+    }
+    
+    return customRoutes.length;
+}
 
 // ==========================================
 // Server startup
@@ -137,33 +228,37 @@ async function startServer() {
             process.exit(1);
         }
         
-        // Sync database models (in development)
-        if (process.env.NODE_ENV === 'development') {
-            await sequelize.sync({ alter: false });
-            console.log('✅ Database models synchronized');
-        }
+        // Sync database models
+        await sequelize.sync({ alter: false });
+        console.log('✅ Database models synchronized');
+        
+        // Load custom routes
+        const customRoutesCount = await loadCustomRoutes();
+        
+        // Register 404 handler after all routes
+        register404Handler();
         
         // Start server
-        app.listen(PORT, () => {
+        app.listen(PORT, '0.0.0.0', () => {
             console.log('');
             console.log('╔══════════════════════════════════════════════════╗');
             console.log('║      🏢 Facility Master API Server              ║');
             console.log('╚══════════════════════════════════════════════════╝');
             console.log('');
             console.log(`🚀 Server running on port ${PORT}`);
-            console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-            console.log(`📡 API Base URL: http://localhost:${PORT}/api/${API_VERSION}`);
-            console.log(`💚 Health Check: http://localhost:${PORT}/health`);
+            console.log(`🌍 Environment: ${process.env.NODE_ENV || 'production'}`);
+            console.log(`📡 API Base URL: http://0.0.0.0:${PORT}/api/${API_VERSION}`);
+            console.log(`💚 Health Check: http://0.0.0.0:${PORT}/health`);
+            console.log(`📦 Custom Routes: ${customRoutesCount}`);
             console.log('');
-            console.log('Available endpoints:');
-            console.log(`  - GET    /api/${API_VERSION}/projects/:id/roles`);
-            console.log(`  - POST   /api/${API_VERSION}/projects/:id/roles`);
-            console.log(`  - GET    /api/${API_VERSION}/projects/:id/members`);
-            console.log(`  - POST   /api/${API_VERSION}/projects/:id/members`);
-            console.log(`  - GET    /api/${API_VERSION}/notifications`);
-            console.log(`  - POST   /api/${API_VERSION}/tickets/:id/assign`);
-            console.log(`  - GET    /api/${API_VERSION}/tickets/:id/assignable-users`);
-            console.log('');
+            
+            if (dynamicRoutesInfo.length > 0) {
+                console.log('Dynamic Routes:');
+                for (const route of dynamicRoutesInfo) {
+                    console.log(`  - ${route.methods.join(',')} ${route.path} -> ${route.table}`);
+                }
+                console.log('');
+            }
         });
     } catch (error) {
         console.error('❌ Failed to start server:', error);
@@ -188,4 +283,3 @@ process.on('SIGINT', async () => {
 startServer();
 
 export default app;
-

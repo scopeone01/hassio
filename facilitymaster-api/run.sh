@@ -5,10 +5,6 @@
 
 set -e
 
-# ==============================================================================
-# Load configuration from Home Assistant options.json
-# ==============================================================================
-
 CONFIG_PATH=/data/options.json
 
 echo "[INFO] Loading configuration..."
@@ -21,6 +17,10 @@ export DB_USER=$(jq -r '.database_user // "facilitymaster"' $CONFIG_PATH)
 export DB_PASSWORD=$(jq -r '.database_password // ""' $CONFIG_PATH)
 export JWT_SECRET=$(jq -r '.jwt_secret // ""' $CONFIG_PATH)
 export AUTO_MIGRATE=$(jq -r '.auto_migrate // true' $CONFIG_PATH)
+
+# Export custom routes as JSON string for the Node.js app
+export CUSTOM_ROUTES=$(jq -c '.custom_routes // []' $CONFIG_PATH)
+
 export NODE_ENV=production
 export PORT=3000
 
@@ -31,12 +31,11 @@ if [ -z "$JWT_SECRET" ] || [ "$JWT_SECRET" = "null" ]; then
 fi
 
 echo "[INFO] Configuration loaded:"
-echo "  Database Host: ${DB_HOST}:${DB_PORT}"
-echo "  Database Name: ${DB_NAME}"
-echo "  Database User: ${DB_USER}"
+echo "  Database: ${DB_USER}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
+echo "  Custom Routes: $(echo $CUSTOM_ROUTES | jq length) defined"
 
 # ==============================================================================
-# Wait for MariaDB to be ready
+# Wait for MariaDB
 # ==============================================================================
 
 echo "[INFO] Waiting for MariaDB at ${DB_HOST}:${DB_PORT}..."
@@ -47,22 +46,18 @@ counter=0
 while ! nc -z "$DB_HOST" "$DB_PORT" 2>/dev/null; do
     counter=$((counter + 1))
     if [ $counter -ge $timeout ]; then
-        echo "[ERROR] Timeout waiting for MariaDB after ${timeout} seconds!"
+        echo "[ERROR] Timeout waiting for MariaDB!"
         exit 1
     fi
-    
-    if [ $((counter % 10)) -eq 0 ]; then
-        echo "[INFO] Still waiting for MariaDB... (${counter}/${timeout}s)"
-    fi
-    
+    [ $((counter % 10)) -eq 0 ] && echo "[INFO] Waiting... (${counter}/${timeout}s)"
     sleep 1
 done
 
-echo "[INFO] MariaDB is ready!"
+echo "[INFO] ✅ MariaDB is ready!"
 sleep 2
 
 # ==============================================================================
-# Run database migrations if enabled
+# Run migrations if enabled
 # ==============================================================================
 
 if [ "$AUTO_MIGRATE" = "true" ]; then
@@ -72,15 +67,17 @@ if [ "$AUTO_MIGRATE" = "true" ]; then
 fi
 
 # ==============================================================================
-# Start the API server
+# Start API Server
 # ==============================================================================
 
+echo ""
 echo "=============================================="
-echo " Starting FacilityMaster API Server..."
+echo " 🚀 Starting FacilityMaster API Server"
 echo "=============================================="
 echo ""
-echo " API available at: http://homeassistant.local:3000"
-echo " Health check: /health"
+echo " API: http://homeassistant.local:3000/api/v1"
+echo " Health: http://homeassistant.local:3000/health"
+echo " Dynamic Routes: http://homeassistant.local:3000/api/v1/dynamic-routes"
 echo ""
 
 cd /app
