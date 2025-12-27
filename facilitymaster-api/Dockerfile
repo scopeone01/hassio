@@ -9,7 +9,7 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 # Clone API server (with cache busting - updated timestamp forces rebuild)
-ARG CACHE_BUST=20251227_115000
+ARG CACHE_BUST=20251227_120000
 RUN git clone --depth 1 https://github.com/scopeone01/hassio.git /tmp/repo && \
     ls -la /tmp/repo/ && \
     cp -r /tmp/repo/package*.json /app/ && \
