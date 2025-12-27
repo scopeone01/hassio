@@ -17,9 +17,18 @@ router.post('/migrate', async (req, res) => {
         // Create tables using raw SQL - MariaDB compatible
         // Don't use sequelize.sync() - it causes issues with JSON defaults
         try {
+            // Drop existing tables to ensure clean migration
+            console.log('🗑️ Dropping existing tables...');
+            await sequelize.query(`SET FOREIGN_KEY_CHECKS = 0`);
+            await sequelize.query(`DROP TABLE IF EXISTS user_project_access`);
+            await sequelize.query(`DROP TABLE IF EXISTS projects`);
+            await sequelize.query(`DROP TABLE IF EXISTS users`);
+            await sequelize.query(`SET FOREIGN_KEY_CHECKS = 1`);
+            console.log('✅ Old tables dropped');
+
             // Create users table
             await sequelize.query(`
-                CREATE TABLE IF NOT EXISTS users (
+                CREATE TABLE users (
                     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
                     email VARCHAR(255) NOT NULL UNIQUE,
                     password_hash VARCHAR(255) NOT NULL,
@@ -30,16 +39,16 @@ router.post('/migrate', async (req, res) => {
                     is_technician BOOLEAN DEFAULT FALSE,
                     is_active BOOLEAN DEFAULT TRUE,
                     created_by CHAR(36),
-                    last_login TIMESTAMP,
+                    last_login TIMESTAMP NULL,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             `);
-            console.log('✅ Users table ready');
+            console.log('✅ Users table created');
 
             // Create projects table
             await sequelize.query(`
-                CREATE TABLE IF NOT EXISTS projects (
+                CREATE TABLE projects (
                     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
                     name VARCHAR(255) NOT NULL,
                     project_number VARCHAR(255) NOT NULL,
@@ -56,11 +65,11 @@ router.post('/migrate', async (req, res) => {
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             `);
-            console.log('✅ Projects table ready');
+            console.log('✅ Projects table created');
 
             // Create user_project_access table
             await sequelize.query(`
-                CREATE TABLE IF NOT EXISTS user_project_access (
+                CREATE TABLE user_project_access (
                     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
                     user_id CHAR(36) NOT NULL,
                     project_id CHAR(36) NOT NULL,
@@ -76,7 +85,7 @@ router.post('/migrate', async (req, res) => {
                     receive_notifications BOOLEAN DEFAULT TRUE,
                     notification_channels JSON,
                     granted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    granted_by CHAR(36),
+                    granted_by_id CHAR(36),
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                     UNIQUE KEY unique_user_project (user_id, project_id),
@@ -84,7 +93,7 @@ router.post('/migrate', async (req, res) => {
                     FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             `);
-            console.log('✅ User-Project-Access table ready');
+            console.log('✅ User-Project-Access table created');
 
         } catch (e) {
             console.warn('⚠️ Table creation warning:', e.message);
@@ -93,28 +102,7 @@ router.post('/migrate', async (req, res) => {
         // Verify connection works
         await sequelize.authenticate();
         console.log('✅ Database connection verified');
-
-        // Try to add missing columns to existing tables (ALTER TABLE for upgrades)
-        try {
-            console.log('🔧 Checking for missing columns...');
-
-            // Add granted_by and granted_at if missing from user_project_access
-            await sequelize.query(`
-                ALTER TABLE user_project_access
-                ADD COLUMN IF NOT EXISTS granted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            `);
-
-            await sequelize.query(`
-                ALTER TABLE user_project_access
-                ADD COLUMN IF NOT EXISTS granted_by CHAR(36)
-            `);
-
-            console.log('✅ Column upgrades completed');
-        } catch (e) {
-            console.warn('⚠️ Column upgrade warning (may be normal if columns already exist):', e.message);
-        }
-
-        console.log('✅ Migrations completed successfully');
+        console.log('✅ All tables created with correct schema');
 
         res.json({
             success: true,
