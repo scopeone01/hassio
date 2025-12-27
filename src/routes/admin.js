@@ -22,11 +22,15 @@ router.post('/migrate', async (req, res) => {
                 CREATE TABLE IF NOT EXISTS users (
                     id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
                     email VARCHAR(255) NOT NULL UNIQUE,
-                    password VARCHAR(255) NOT NULL,
+                    password_hash VARCHAR(255) NOT NULL,
                     first_name VARCHAR(255) NOT NULL,
                     last_name VARCHAR(255) NOT NULL,
-                    role_name VARCHAR(50) DEFAULT 'user',
+                    phone_number VARCHAR(255),
+                    role_name VARCHAR(50) DEFAULT 'USER',
+                    is_technician BOOLEAN DEFAULT FALSE,
                     is_active BOOLEAN DEFAULT TRUE,
+                    created_by CHAR(36),
+                    last_login TIMESTAMP,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
@@ -108,10 +112,10 @@ router.post('/seed', async (req, res) => {
         const hashedPassword = await bcrypt.hash('admin123', 12);
         const adminUser = await User.create({
             email: 'admin@facilitymaster.local',
-            password: hashedPassword,
+            passwordHash: hashedPassword,
             firstName: 'Admin',
             lastName: 'User',
-            roleName: 'admin',
+            roleName: 'ADMIN',
             isActive: true
         });
         
