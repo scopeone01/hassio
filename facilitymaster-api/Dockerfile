@@ -9,10 +9,11 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 # Clone API server (with cache busting - updated timestamp forces rebuild)
-ARG CACHE_BUST=20251227_004000
+ARG CACHE_BUST=20251227_005000
 RUN git clone --depth 1 https://github.com/scopeone01/hassio.git /tmp/repo && \
-    cp -r /tmp/repo/facility-master-api/package*.json /app/ && \
-    cp -r /tmp/repo/facility-master-api/src /app/ && \
+    ls -la /tmp/repo/ && \
+    cp -r /tmp/repo/package*.json /app/ && \
+    cp -r /tmp/repo/src /app/ && \
     rm -rf /tmp/repo && \
     echo "📦 Code cloned at $(date)" && \
     echo "✅ Checking admin.js:" && \
@@ -35,6 +36,6 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s \
     CMD curl -f http://localhost:3000/health || exit 1
 
-LABEL io.hass.version="1.1.0" io.hass.type="addon"
+LABEL io.hass.version="1.1.1" io.hass.type="addon"
 
 CMD ["/run.sh"]
