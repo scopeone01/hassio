@@ -11,27 +11,38 @@ const router = express.Router();
 // Login
 router.post('/login', async (req, res) => {
   try {
+    console.log('🔐 Login attempt:', { email: req.body?.email, hasPassword: !!req.body?.password });
     const { email, password } = req.body;
 
     if (!email || !password) {
+      console.log('❌ Missing credentials');
       return res.status(400).json({ error: 'Email und Passwort sind erforderlich' });
     }
 
     // Find user in database
+    console.log('🔍 Searching for user:', email);
     const user = await User.findOne({ where: { email } });
 
     if (!user) {
+      console.log('❌ User not found:', email);
       return res.status(401).json({ error: 'Ungültige Anmeldedaten' });
     }
 
+    console.log('✅ User found:', { id: user.id, email: user.email, isActive: user.isActive });
+
     // Check if user is active
     if (!user.isActive) {
+      console.log('❌ User inactive:', email);
       return res.status(403).json({ error: 'Account ist deaktiviert' });
     }
 
     // Verify password
+    console.log('🔐 Verifying password for:', email);
     const isPasswordValid = await user.checkPassword(password);
+    console.log('🔐 Password valid:', isPasswordValid);
+
     if (!isPasswordValid) {
+      console.log('❌ Invalid password for:', email);
       return res.status(401).json({ error: 'Ungültige Anmeldedaten' });
     }
 
