@@ -77,7 +77,7 @@ const UserProjectAccess = sequelize.define('user_project_access', {
     },
     grantedBy: {
         type: DataTypes.UUID,
-        field: 'granted_by'
+        field: 'granted_by_id'
     }
 }, {
     tableName: 'user_project_access',
