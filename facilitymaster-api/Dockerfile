@@ -9,7 +9,7 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 # Clone API server (with cache busting - updated timestamp forces rebuild)
-ARG CACHE_BUST=20251227_120000
+ARG CACHE_BUST=20251227_153000
 RUN git clone --depth 1 https://github.com/scopeone01/hassio.git /tmp/repo && \
     ls -la /tmp/repo/ && \
     cp -r /tmp/repo/package*.json /app/ && \
@@ -36,6 +36,6 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s \
     CMD curl -f http://localhost:3000/health || exit 1
 
-LABEL io.hass.version="1.1.8" io.hass.type="addon"
+LABEL io.hass.version="1.2.1" io.hass.type="addon"
 
 CMD ["/run.sh"]
