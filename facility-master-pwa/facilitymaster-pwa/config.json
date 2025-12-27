@@ -1,0 +1,16 @@
+{
+  "name": "FacilityMaster PWA",
+  "version": "1.0.0",
+  "slug": "facilitymaster-pwa",
+  "description": "Progressive Web App for External Ticket Creation",
+  "url": "https://github.com/scopeone01/hassio",
+  "arch": ["aarch64", "amd64", "armv7", "armhf", "i386"],
+  "init": false,
+  "startup": "application",
+  "boot": "auto",
+  "ports": {
+    "8080/tcp": 8080
+  },
+  "options": {},
+  "schema": {}
+}
