@@ -120,9 +120,11 @@ router.post('/seed', async (req, res) => {
         // Create demo project
         const demoProject = await Project.create({
             name: 'Demo Project',
-            description: 'Default demo project for testing',
-            status: 'active',
-            createdById: adminUser.id
+            projectNumber: 'DEMO-001',
+            address: 'Demo Street 1',
+            city: 'Demo City',
+            postalCode: '12345',
+            country: 'Deutschland'
         });
         
         console.log('✅ Created demo project:', demoProject.name);
