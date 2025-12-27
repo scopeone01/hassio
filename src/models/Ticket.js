@@ -23,7 +23,7 @@ const Ticket = sequelize.define('Ticket', {
   },
   description: {
     type: DataTypes.TEXT,
-    field: 'ticket_description',
+    field: 'description',
   },
   status: {
     type: DataTypes.STRING(50),
