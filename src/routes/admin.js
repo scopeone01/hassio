@@ -94,6 +94,26 @@ router.post('/migrate', async (req, res) => {
         await sequelize.authenticate();
         console.log('✅ Database connection verified');
 
+        // Try to add missing columns to existing tables (ALTER TABLE for upgrades)
+        try {
+            console.log('🔧 Checking for missing columns...');
+
+            // Add granted_by and granted_at if missing from user_project_access
+            await sequelize.query(`
+                ALTER TABLE user_project_access
+                ADD COLUMN IF NOT EXISTS granted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            `);
+
+            await sequelize.query(`
+                ALTER TABLE user_project_access
+                ADD COLUMN IF NOT EXISTS granted_by CHAR(36)
+            `);
+
+            console.log('✅ Column upgrades completed');
+        } catch (e) {
+            console.warn('⚠️ Column upgrade warning (may be normal if columns already exist):', e.message);
+        }
+
         console.log('✅ Migrations completed successfully');
 
         res.json({
