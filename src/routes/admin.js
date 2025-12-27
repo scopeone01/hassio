@@ -58,6 +58,34 @@ router.post('/migrate', async (req, res) => {
             `);
             console.log('✅ Projects table ready');
 
+            // Create user_project_access table
+            await sequelize.query(`
+                CREATE TABLE IF NOT EXISTS user_project_access (
+                    id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+                    user_id CHAR(36) NOT NULL,
+                    project_id CHAR(36) NOT NULL,
+                    role_id CHAR(36),
+                    access_level VARCHAR(50) DEFAULT 'READ',
+                    user_type VARCHAR(50) DEFAULT 'MEMBER',
+                    can_create_tickets BOOLEAN DEFAULT TRUE,
+                    can_edit_tickets BOOLEAN DEFAULT TRUE,
+                    can_assign_tickets BOOLEAN DEFAULT FALSE,
+                    can_delete_tickets BOOLEAN DEFAULT FALSE,
+                    can_approve_workflow BOOLEAN DEFAULT FALSE,
+                    can_view_all_tickets BOOLEAN DEFAULT TRUE,
+                    receive_notifications BOOLEAN DEFAULT TRUE,
+                    notification_channels JSON,
+                    granted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    granted_by CHAR(36),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    UNIQUE KEY unique_user_project (user_id, project_id),
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            `);
+            console.log('✅ User-Project-Access table ready');
+
         } catch (e) {
             console.warn('⚠️ Table creation warning:', e.message);
         }
