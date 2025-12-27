@@ -28,3 +28,15 @@ coverage/
 dist/
 build/
 
+# API Server Source Code (keep locally, not in add-on repo)
+src/
+package.json
+package-lock.json
+check-db.js
+*.sql
+setup-docker.sh
+BENUTZER_ERSTELLEN.md
+QUICK_START.md
+README.md
+SETUP.md
+
