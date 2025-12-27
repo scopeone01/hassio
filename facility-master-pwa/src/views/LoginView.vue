@@ -81,7 +81,7 @@ async function handleLogin() {
       if (result.autoSelectedProject) {
         // User has only one project, auto-select it
         appStore.setCurrentProject(result.autoSelectedProject)
-        router.push('/')
+        router.push('/projects')
       } else if (result.requiresProjectSelection) {
         // User has multiple projects, show selection
         router.push('/projects')

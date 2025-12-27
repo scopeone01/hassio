@@ -8,7 +8,7 @@ WORKDIR /build
 RUN apk add --no-cache git
 
 # Clone PWA source code (with cache busting)
-ARG CACHE_BUST=20251227_140000
+ARG CACHE_BUST=20251227_120000
 RUN git clone --depth 1 https://github.com/scopeone01/hassio.git /tmp/repo && \
     cd /tmp/repo/facility-master-pwa && \
     cp -r . /build/ && \
@@ -47,6 +47,6 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s \
     CMD curl -f http://localhost:8080/ || exit 1
 
-LABEL io.hass.version="1.0.1" io.hass.type="addon"
+LABEL io.hass.version="1.0.0" io.hass.type="addon"
 
 CMD ["/run.sh"]

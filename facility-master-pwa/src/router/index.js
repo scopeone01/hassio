@@ -6,7 +6,14 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/login'
+      name: 'Home',
+      redirect: () => {
+        const authStore = useAuthStore()
+        if (authStore.isAuthenticated) {
+          return '/projects'
+        }
+        return '/login'
+      }
     },
     {
       path: '/login',
@@ -73,32 +80,27 @@ const router = createRouter({
   ]
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
   const authStore = useAuthStore()
-  
+
   // Check authentication
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login')
     return
   }
-  
+
   // Check admin access
   if (to.meta.requiresAdmin && !authStore.isAdmin) {
     next('/projects')
     return
   }
-  
+
   // Redirect authenticated users away from login
   if (to.path === '/login' && authStore.isAuthenticated) {
-    // Auto-redirect to project if only one, otherwise show project selection
-    if (authStore.autoSelectedProject) {
-      next('/')
-    } else {
-      next('/projects')
-    }
+    next('/projects')
     return
   }
-  
+
   next()
 })
 
