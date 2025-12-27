@@ -8,14 +8,15 @@ RUN apk add --no-cache \
 
 WORKDIR /app
 
-# Clone API server (with cache busting)
-ARG CACHE_BUST=1
+# Clone API server (with cache busting - updated timestamp forces rebuild)
+ARG CACHE_BUST=20251227_004000
 RUN git clone --depth 1 https://github.com/scopeone01/hassio.git /tmp/repo && \
-    cp -r /tmp/repo/package*.json /app/ && \
-    cp -r /tmp/repo/src /app/ && \
+    cp -r /tmp/repo/facility-master-api/package*.json /app/ && \
+    cp -r /tmp/repo/facility-master-api/src /app/ && \
     rm -rf /tmp/repo && \
     echo "📦 Code cloned at $(date)" && \
-    ls -la /app/src/routes/admin.js || echo "❌ admin.js not found!"
+    echo "✅ Checking admin.js:" && \
+    head -20 /app/src/routes/admin.js
 
 # Install ALL dependencies (including devDependencies for native builds)
 # Then rebuild bcrypt for Alpine
@@ -34,6 +35,6 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s \
     CMD curl -f http://localhost:3000/health || exit 1
 
-LABEL io.hass.version="1.0.9" io.hass.type="addon"
+LABEL io.hass.version="1.1.0" io.hass.type="addon"
 
 CMD ["/run.sh"]
