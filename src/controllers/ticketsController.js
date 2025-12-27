@@ -5,6 +5,82 @@ import Ticket from '../models/Ticket.js';
 import Project from '../models/Project.js';
 import User from '../models/User.js';
 
+// GET /api/v1/projects/:projectId/tickets
+export const getProjectTickets = async (req, res) => {
+  try {
+    // Support both :id and :projectId parameter names
+    const projectId = req.params.projectId || req.params.id || req.projectId;
+
+    if (!projectId) {
+      return res.status(400).json({
+        error: 'Project ID is required',
+      });
+    }
+
+    // Use project from middleware if available, otherwise fetch it
+    let project = req.project;
+    if (!project) {
+      project = await Project.findByPk(projectId);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+    }
+
+    // Use projectAccess from middleware if available, otherwise check manually
+    const userAccess = req.projectAccess || await UserProjectAccess.findOne({
+      where: { userId: req.user.id, projectId },
+    });
+
+    if (!userAccess) {
+      return res.status(403).json({ error: 'Access denied to this project' });
+    }
+
+    // Fetch all tickets for this project
+    const tickets = await Ticket.findAll({
+      where: { projectId },
+      include: [
+        {
+          model: User,
+          as: 'assignedTo',
+          attributes: ['id', 'firstName', 'lastName', 'email'],
+        },
+        {
+          model: User,
+          as: 'createdBy',
+          attributes: ['id', 'firstName', 'lastName', 'email'],
+        },
+      ],
+      order: [['createdAt', 'DESC']],
+    });
+
+    // Format tickets for response
+    const formattedTickets = tickets.map(ticket => ({
+      id: ticket.id,
+      ticketNumber: ticket.ticketNumber,
+      title: ticket.title,
+      description: ticket.description,
+      category: ticket.category,
+      priority: ticket.priority,
+      status: ticket.status,
+      assignedToId: ticket.assignedToId,
+      assignedToName: ticket.assignedTo
+        ? `${ticket.assignedTo.firstName} ${ticket.assignedTo.lastName}`
+        : null,
+      createdById: ticket.createdById,
+      createdByName: ticket.createdBy
+        ? `${ticket.createdBy.firstName} ${ticket.createdBy.lastName}`
+        : null,
+      createdAt: ticket.createdAt,
+      updatedAt: ticket.updatedAt,
+    }));
+
+    res.status(200).json(formattedTickets);
+  } catch (error) {
+    console.error('Error fetching project tickets:', error);
+    res.status(500).json({ error: 'Failed to fetch tickets' });
+  }
+};
+
 // POST /api/v1/projects/:projectId/tickets
 export const createTicket = async (req, res) => {
   try {

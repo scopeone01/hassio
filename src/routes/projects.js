@@ -14,6 +14,9 @@ router.get('/', authenticateToken, projectsController.getProjects);
 router.post('/', authenticateToken, canManageProjects, projectsController.createProject);
 
 // IMPORTANT: Specific routes must come BEFORE the generic /:id route
+// Get tickets for a project
+router.get('/:id/tickets', authenticateToken, checkProjectAccess('read'), ticketsController.getProjectTickets);
+
 // Create ticket for a project
 router.post('/:id/tickets', authenticateToken, checkProjectAccess('read'), ticketsController.createTicket);
 
