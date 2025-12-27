@@ -97,13 +97,25 @@ const User = sequelize.define('User', {
 // Instance method to check password
 User.prototype.checkPassword = async function(password) {
   try {
+    console.log('🔐 checkPassword called with:', {
+      hasPasswordHash: !!this.passwordHash,
+      passwordHashPrefix: this.passwordHash ? this.passwordHash.substring(0, 10) : 'none',
+      passwordLength: password ? password.length : 0,
+      passwordValue: password // TEMPORARY: Remove this in production!
+    });
+
     if (!this.passwordHash || !password) {
+      console.log('❌ Missing passwordHash or password');
       return false;
     }
+
+    console.log('🔐 Calling bcrypt.compare...');
     const result = await bcrypt.compare(password, this.passwordHash);
+    console.log('🔐 bcrypt.compare result:', result);
+
     return result;
   } catch (error) {
-    console.error('Password check error:', error);
+    console.error('❌ Password check error:', error);
     return false;
   }
 };
