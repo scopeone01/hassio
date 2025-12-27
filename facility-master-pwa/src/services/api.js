@@ -34,7 +34,8 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    // Handle both 401 (Unauthorized) and 403 (Forbidden - invalid/expired token)
+    if (error.response?.status === 401 || error.response?.status === 403) {
       const authStore = useAuthStore()
       authStore.logout()
       window.location.href = '/login'
