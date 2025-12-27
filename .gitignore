@@ -28,10 +28,12 @@ coverage/
 dist/
 build/
 
-# API Server Source Code (keep locally, not in add-on repo)
-src/
-package.json
-package-lock.json
+# API Server Source Code - DON'T IGNORE, needed by Dockerfile
+# src/
+# package.json
+# package-lock.json
+
+# Only ignore development files
 check-db.js
 *.sql
 setup-docker.sh

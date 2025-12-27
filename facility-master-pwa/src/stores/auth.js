@@ -12,9 +12,9 @@ export const useAuthStore = defineStore('auth', () => {
   const isAdmin = computed(() => user.value?.roleName === 'ADMIN')
   const requiresProjectSelection = computed(() => availableProjects.value.length > 1)
   
-  async function login(email, password) {
+  async function login(email, password, rememberMe = false) {
     try {
-      const response = await api.post('/auth/login', { email, password })
+      const response = await api.post('/auth/login', { email, password, rememberMe })
       token.value = response.data.token
       user.value = response.data.user
       availableProjects.value = response.data.availableProjects || []

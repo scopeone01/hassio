@@ -32,6 +32,16 @@
           />
         </div>
 
+        <div class="form-group checkbox-group">
+          <label class="checkbox-label">
+            <input
+              v-model="form.rememberMe"
+              type="checkbox"
+            />
+            <span>Angemeldet bleiben (30 Tage)</span>
+          </label>
+        </div>
+
         <div v-if="error" class="error-message">
           {{ error }}
         </div>
@@ -61,7 +71,8 @@ const appStore = useAppStore()
 
 const form = ref({
   email: '',
-  password: ''
+  password: '',
+  rememberMe: false
 })
 
 const isLoading = ref(false)
@@ -74,7 +85,7 @@ async function handleLogin() {
     isLoading.value = true
     error.value = null
     
-    const result = await authStore.login(form.value.email, form.value.password)
+    const result = await authStore.login(form.value.email, form.value.password, form.value.rememberMe)
     
     if (result.success) {
       // Auto-select project if only one, otherwise show project selection
@@ -149,6 +160,30 @@ h1 {
 
 .form-group {
   margin-bottom: 20px;
+}
+
+.checkbox-group {
+  margin-bottom: 16px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #1d1d1f;
+  font-weight: normal;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: auto;
+  cursor: pointer;
+  accent-color: #007aff;
+}
+
+.checkbox-label span {
+  user-select: none;
 }
 
 label {
