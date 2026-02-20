@@ -1,6 +1,6 @@
 {
   "name": "ZeroClaw AI Agent",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "slug": "zeroclaw-ai",
   "description": "Autonomous AI agent for Home Assistant — control your smart home with natural language",
   "url": "https://github.com/scopeone01/hassio",
