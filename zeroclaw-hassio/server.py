@@ -5,6 +5,8 @@ Lightweight Python bridge between Home Assistant and LLM providers.
 Provides: Chat API, Entity tools, Event listener, WebUI panel.
 """
 
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
