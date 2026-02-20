@@ -16,6 +16,6 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s \
     CMD curl -sf http://127.0.0.1:3000/health || exit 1
 
-LABEL io.hass.version="0.7.0" io.hass.type="addon"
+LABEL io.hass.version="0.7.1" io.hass.type="addon"
 
 CMD ["/run.sh"]
