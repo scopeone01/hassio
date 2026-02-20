@@ -1,0 +1,72 @@
+{
+  "name": "ZeroClaw AI Agent",
+  "version": "0.1.0",
+  "slug": "zeroclaw",
+  "description": "Autonomous AI agent for Home Assistant — control your smart home with natural language",
+  "url": "https://github.com/scopeone01/hassio",
+  "arch": ["aarch64", "amd64"],
+  "init": false,
+  "homeassistant_api": true,
+  "hassio_api": true,
+  "ingress": true,
+  "ingress_port": 3000,
+  "ingress_entry": "/ha/ui",
+  "panel_icon": "mdi:robot",
+  "panel_title": "ZeroClaw",
+  "startup": "application",
+  "boot": "auto",
+  "ports": {
+    "3000/tcp": null
+  },
+  "map": ["config:rw", "share:rw", "ssl:ro"],
+  "environment": {
+    "ZEROCLAW_ALLOW_PUBLIC_BIND": "true"
+  },
+  "options": {
+    "provider": "ollama",
+    "model": "",
+    "api_key": "",
+    "api_url": "http://homeassistant:11434",
+    "temperature": 0.7,
+    "system_prompt": "You are a helpful smart home AI assistant running inside Home Assistant. Use ha_* tools to control devices and answer questions about the home.",
+    "allowed_domains": [
+      "light",
+      "switch",
+      "climate",
+      "cover",
+      "media_player",
+      "fan",
+      "scene",
+      "script",
+      "automation",
+      "input_boolean",
+      "input_number",
+      "input_select"
+    ],
+    "event_listener": true,
+    "event_filter": ["state_changed"],
+    "mqtt_enabled": false,
+    "mqtt_broker": "core-mosquitto",
+    "mqtt_port": 1883,
+    "mqtt_username": "",
+    "mqtt_password": "",
+    "log_level": "info"
+  },
+  "schema": {
+    "provider": "str",
+    "model": "str?",
+    "api_key": "password?",
+    "api_url": "url?",
+    "temperature": "float?",
+    "system_prompt": "str?",
+    "allowed_domains": ["str"],
+    "event_listener": "bool",
+    "event_filter": ["str"],
+    "mqtt_enabled": "bool",
+    "mqtt_broker": "str?",
+    "mqtt_port": "port?",
+    "mqtt_username": "str?",
+    "mqtt_password": "password?",
+    "log_level": "list(trace|debug|info|warn|error)"
+  }
+}
