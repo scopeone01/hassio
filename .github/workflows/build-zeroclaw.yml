@@ -24,7 +24,7 @@ jobs:
       - name: Checkout ZeroClaw source
         uses: actions/checkout@v4
         with:
-          repository: zeroclaw-labs/zeroclaw
+          repository: openagen/zeroclaw
           path: zeroclaw-source
 
       - name: Set up Docker Buildx
