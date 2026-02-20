@@ -1,8 +1,6 @@
-FROM python:3.11-slim
+FROM python:3.11-alpine
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl jq && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache curl jq
 
 WORKDIR /app
 
@@ -16,6 +14,6 @@ RUN mkdir -p /data/zeroclaw
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
     CMD curl -sf http://127.0.0.1:3000/health || exit 1
 
-LABEL io.hass.version="0.3.1" io.hass.type="addon"
+LABEL io.hass.version="0.3.2" io.hass.type="addon"
 
 CMD ["python3", "server.py"]
