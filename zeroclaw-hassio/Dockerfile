@@ -1,25 +1,24 @@
 # ────────────────────────────────────────────────────────────────────
 # ZeroClaw Home Assistant Add-on — Dockerfile
 # ────────────────────────────────────────────────────────────────────
-# Clones ZeroClaw from GitHub and compiles from source.
+# Built via GitHub Actions, source copied from build context.
 # ────────────────────────────────────────────────────────────────────
 
 # ── Stage 1: Build the ZeroClaw binary ──────────────────────────────
 FROM rust:1.93-slim AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    pkg-config libssl-dev ca-certificates git && \
+    pkg-config libssl-dev ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
 
-# Clone ZeroClaw source from GitHub
-ARG CACHE_BUST=20260220
-RUN git clone --depth 1 https://github.com/zeroclaw-labs/zeroclaw.git . && \
-    echo "Cloned ZeroClaw at $(date)"
+# Copy ZeroClaw source from build context (checked out by CI)
+ARG ZEROCLAW_SOURCE=zeroclaw-source
+COPY ${ZEROCLAW_SOURCE}/ .
 
-# Build the binary with mqtt feature
-RUN cargo build --release --features mqtt && \
+# Build the binary
+RUN cargo build --release --features mqtt 2>&1 && \
     strip target/release/zeroclaw
 
 # ── Stage 2: Runtime ────────────────────────────────────────────────

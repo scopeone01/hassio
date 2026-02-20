@@ -4,6 +4,7 @@
   "slug": "zeroclaw",
   "description": "Autonomous AI agent for Home Assistant — control your smart home with natural language",
   "url": "https://github.com/scopeone01/hassio",
+  "image": "ghcr.io/scopeone01/zeroclaw-hassio-{arch}",
   "arch": ["aarch64", "amd64"],
   "init": false,
   "homeassistant_api": true,
