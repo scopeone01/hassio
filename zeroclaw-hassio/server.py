@@ -241,6 +241,11 @@ class LLMClient:
             "Use the ha_* tools to control devices, check states, and answer questions about the home. "
             "Be concise and helpful. When controlling devices, confirm the action taken."
         )
+        # Fallback provider config
+        self.fallback_provider = options.get("fallback_provider", "none")
+        self.fallback_model = options.get("fallback_model", "")
+        self.fallback_api_key = options.get("fallback_api_key", "")
+        self.fallback_api_url = options.get("fallback_api_url", "")
         self.session: aiohttp.ClientSession | None = None
         self.conversation: list[dict] = []
 
@@ -251,56 +256,110 @@ class LLMClient:
         if self.session:
             await self.session.close()
 
-    def _get_endpoint(self) -> str:
-        if self.provider == "ollama":
-            base = self.api_url or "http://homeassistant:11434"
+    def _get_endpoint(self, provider: str = None, api_url: str = None) -> str:
+        p = provider or self.provider
+        url = api_url or self.api_url
+        if p == "ollama":
+            base = url or "http://homeassistant:11434"
             return f"{base}/api/chat"
-        elif self.provider == "openai":
-            return "https://api.openai.com/v1/chat/completions"
-        elif self.provider == "openrouter":
-            return "https://openrouter.ai/api/v1/chat/completions"
-        elif self.provider == "anthropic":
-            return "https://api.anthropic.com/v1/messages"
-        elif self.provider == "gemini":
-            return f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent"
+        elif p == "openai":
+            return url or "https://api.openai.com/v1/chat/completions"
+        elif p == "codex":
+            return url or "https://api.openai.com/v1/chat/completions"
+        elif p == "openrouter":
+            return url or "https://openrouter.ai/api/v1/chat/completions"
+        elif p == "anthropic":
+            return url or "https://api.anthropic.com/v1/messages"
+        elif p == "gemini":
+            model = self.model or "gemini-2.0-flash"
+            return url or f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+        elif p == "minimax":
+            return url or "https://api.minimaxi.chat/v1/chat/completions"
+        elif p == "zai":
+            return url or "https://open.bigmodel.cn/api/paas/v4/chat/completions"
         else:
-            return self.api_url or "https://api.openai.com/v1/chat/completions"
+            return url or "https://api.openai.com/v1/chat/completions"
 
-    def _get_default_model(self) -> str:
-        if self.model:
+    def _get_default_model(self, provider: str = None) -> str:
+        p = provider or self.provider
+        if provider and self.fallback_model:
+            return self.fallback_model
+        if not provider and self.model:
             return self.model
         defaults = {
             "ollama": "llama3",
             "openai": "gpt-4o",
+            "codex": "codex-mini-latest",
             "openrouter": "anthropic/claude-sonnet-4-20250514",
             "anthropic": "claude-sonnet-4-20250514",
             "gemini": "gemini-2.0-flash",
+            "minimax": "MiniMax-M1",
+            "zai": "glm-4-plus",
         }
-        return defaults.get(self.provider, "gpt-4o")
+        return defaults.get(p, "gpt-4o")
 
     async def chat(self, message: str, ha_client: "HomeAssistantClient") -> str:
-        """Send message to LLM with tool-calling support."""
+        """Send message to LLM with tool-calling support and fallback."""
         self.conversation.append({"role": "user", "content": message})
 
         # Limit conversation history
         if len(self.conversation) > 40:
             self.conversation = self.conversation[-30:]
 
-        if self.provider == "ollama":
-            return await self._chat_ollama(ha_client)
-        elif self.provider == "anthropic":
-            return await self._chat_anthropic(ha_client)
-        else:
-            return await self._chat_openai_compatible(ha_client)
+        # Try primary provider
+        try:
+            result = await self._dispatch_chat(self.provider, self.api_key, self.api_url, self.model, ha_client)
+            if result and not result.startswith("Error"):
+                return result
+            raise RuntimeError(result or "Empty response from primary provider")
+        except Exception as primary_err:
+            logger.warning("Primary provider (%s) failed: %s", self.provider, primary_err)
 
-    async def _chat_openai_compatible(self, ha_client: "HomeAssistantClient") -> str:
-        """OpenAI / OpenRouter / generic OpenAI-compatible API."""
-        endpoint = self._get_endpoint()
-        model = self._get_default_model()
+            # Try fallback if configured
+            if self.fallback_provider and self.fallback_provider != "none":
+                logger.info("Switching to fallback provider: %s", self.fallback_provider)
+                try:
+                    result = await self._dispatch_chat(
+                        self.fallback_provider, self.fallback_api_key,
+                        self.fallback_api_url, self.fallback_model, ha_client
+                    )
+                    if result:
+                        return f"[Fallback: {self.fallback_provider}] {result}"
+                except Exception as fb_err:
+                    logger.error("Fallback provider (%s) also failed: %s", self.fallback_provider, fb_err)
+
+            return f"Error: {self.provider} failed ({primary_err}). No working fallback available."
+
+    async def _dispatch_chat(self, provider: str, api_key: str, api_url: str,
+                              model: str, ha_client: "HomeAssistantClient") -> str:
+        """Route to the correct chat method for a given provider."""
+        if provider == "ollama":
+            return await self._chat_ollama(ha_client, api_url=api_url, model_override=model)
+        elif provider == "anthropic":
+            return await self._chat_anthropic(ha_client, api_key=api_key, model_override=model)
+        elif provider in ("openai", "openrouter", "minimax", "zai", "codex", "gemini"):
+            return await self._chat_openai_compatible(
+                ha_client, provider=provider, api_key=api_key,
+                api_url=api_url, model_override=model
+            )
+        else:
+            return await self._chat_openai_compatible(
+                ha_client, provider=provider, api_key=api_key,
+                api_url=api_url, model_override=model
+            )
+
+    async def _chat_openai_compatible(self, ha_client: "HomeAssistantClient",
+                                       provider: str = None, api_key: str = None,
+                                       api_url: str = None, model_override: str = None) -> str:
+        """OpenAI / OpenRouter / MiniMax / Z.AI / Codex / generic OpenAI-compatible API."""
+        p = provider or self.provider
+        key = api_key or self.api_key
+        endpoint = self._get_endpoint(provider=p, api_url=api_url)
+        model = model_override or self._get_default_model(provider=p if provider else None)
 
         headers = {"Content-Type": "application/json"}
-        if self.api_key:
-            headers["Authorization"] = f"Bearer {self.api_key}"
+        if key:
+            headers["Authorization"] = f"Bearer {key}"
 
         messages = [{"role": "system", "content": self.system_prompt}] + self.conversation
 
@@ -318,11 +377,11 @@ class LLMClient:
                     if resp.status != 200:
                         error_text = await resp.text()
                         logger.error("LLM API error %s: %s", resp.status, error_text[:200])
-                        return f"Error communicating with {self.provider}: {resp.status}"
+                        return f"Error communicating with {p}: {resp.status}"
                     result = await resp.json()
             except Exception as e:
                 logger.error("LLM request failed: %s", e)
-                return f"Error: Could not reach {self.provider}. Check connection and API key."
+                return f"Error: Could not reach {p}. Check connection and API key."
 
             choice = result.get("choices", [{}])[0]
             msg = choice.get("message", {})
@@ -349,11 +408,12 @@ class LLMClient:
 
         return "I've reached the maximum tool calls for this request. Please try again."
 
-    async def _chat_ollama(self, ha_client: "HomeAssistantClient") -> str:
+    async def _chat_ollama(self, ha_client: "HomeAssistantClient",
+                            api_url: str = None, model_override: str = None) -> str:
         """Ollama API (slightly different format)."""
-        base = self.api_url or "http://homeassistant:11434"
+        base = api_url or self.api_url or "http://homeassistant:11434"
         endpoint = f"{base}/api/chat"
-        model = self._get_default_model()
+        model = model_override or self._get_default_model()
 
         messages = [{"role": "system", "content": self.system_prompt}] + self.conversation
 
@@ -400,14 +460,16 @@ class LLMClient:
 
         return "Maximum tool calls reached. Please try again."
 
-    async def _chat_anthropic(self, ha_client: "HomeAssistantClient") -> str:
+    async def _chat_anthropic(self, ha_client: "HomeAssistantClient",
+                               api_key: str = None, model_override: str = None) -> str:
         """Anthropic Claude API."""
         endpoint = "https://api.anthropic.com/v1/messages"
-        model = self._get_default_model()
+        model = model_override or self._get_default_model()
+        key = api_key or self.api_key
 
         headers = {
             "Content-Type": "application/json",
-            "x-api-key": self.api_key,
+            "x-api-key": key,
             "anthropic-version": "2023-06-01",
         }
 
@@ -717,7 +779,7 @@ async def create_app(options: dict) -> web.Application:
     # ── Routes ───────────────────────────────────────────────────
 
     async def handle_health(request):
-        return web.json_response({"status": "ok", "addon": "zeroclaw", "version": "0.2.0"})
+        return web.json_response({"status": "ok", "addon": "zeroclaw", "version": "0.3.0"})
 
     async def handle_ha_status(request):
         ha = request.app["ha_client"]
@@ -726,6 +788,8 @@ async def create_app(options: dict) -> web.Application:
             "ha_connected": connected,
             "provider": options.get("provider", "unknown"),
             "model": options.get("model", "auto"),
+            "fallback_provider": options.get("fallback_provider", "none"),
+            "fallback_model": options.get("fallback_model", ""),
         })
 
     async def handle_ha_entities(request):
@@ -808,6 +872,8 @@ def main():
     logger.info("ZeroClaw HA Add-on starting...")
     logger.info("  Provider: %s", options.get("provider"))
     logger.info("  Model: %s", options.get("model") or "auto")
+    logger.info("  Fallback: %s (%s)", options.get("fallback_provider", "none"),
+                options.get("fallback_model") or "auto")
     logger.info("  Event listener: %s", options.get("event_listener"))
     logger.info("  MQTT: %s", options.get("mqtt_enabled"))
 

@@ -3,22 +3,34 @@
 configuration:
   provider:
     name: "LLM-Anbieter"
-    description: "KI-Modell-Anbieter (ollama für lokal, openai/openrouter/anthropic für Cloud)"
+    description: "Primärer KI-Anbieter: ollama (lokal), openai, anthropic, openrouter, gemini, minimax (MiniMax M1), zai (Zhipu GLM-4), codex (OpenAI Codex)"
   model:
     name: "Modell"
-    description: "Modellname (z.B. llama3, gpt-4o, claude-sonnet-4-20250514). Leer lassen für Provider-Standard."
+    description: "Modellname (z.B. llama3, gpt-4o, MiniMax-M1, glm-4-plus, codex-mini-latest). Leer = Provider-Standard."
   api_key:
     name: "API-Schlüssel"
-    description: "API-Schlüssel für Cloud-LLM-Anbieter. Nicht erforderlich für Ollama."
+    description: "API-Schlüssel für Cloud-Anbieter. Nicht erforderlich für Ollama."
   api_url:
     name: "API-URL"
-    description: "Benutzerdefinierte API-Endpunkt-URL. Für Ollama auf demselben Host: http://homeassistant:11434"
+    description: "Benutzerdefinierte API-URL. Ollama: http://homeassistant:11434. Leer = Standard-Endpunkt des Anbieters."
   temperature:
     name: "Temperatur"
     description: "Modell-Kreativität (0.0 = deterministisch, 2.0 = sehr kreativ). Standard: 0.7"
   system_prompt:
     name: "System-Prompt"
     description: "Benutzerdefinierte Anweisungen für den KI-Agenten. Definiert sein Verhalten."
+  fallback_provider:
+    name: "Fallback-Anbieter"
+    description: "Ersatz-Anbieter falls der primäre fehlschlägt. 'none' = kein Fallback."
+  fallback_model:
+    name: "Fallback-Modell"
+    description: "Modellname für den Fallback-Anbieter. Leer = Standard des Fallback-Anbieters."
+  fallback_api_key:
+    name: "Fallback API-Schlüssel"
+    description: "API-Schlüssel für den Fallback-Anbieter."
+  fallback_api_url:
+    name: "Fallback API-URL"
+    description: "Benutzerdefinierte API-URL für den Fallback-Anbieter. Leer = Standard-Endpunkt."
   allowed_domains:
     name: "Erlaubte Domains"
     description: "Entity-Domains, die der Agent steuern darf (z.B. light, switch, climate)"

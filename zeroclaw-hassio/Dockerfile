@@ -35,6 +35,6 @@ LABEL \
     io.hass.description="Autonomous AI agent for Home Assistant" \
     io.hass.arch="amd64|aarch64" \
     io.hass.type="addon" \
-    io.hass.version="0.2.1"
+    io.hass.version="0.3.0"
 
 CMD ["python3", "server.py"]

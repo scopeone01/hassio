@@ -3,22 +3,34 @@
 configuration:
   provider:
     name: "LLM Provider"
-    description: "AI model provider (ollama for local, openai/openrouter/anthropic for cloud)"
+    description: "Primary AI provider: ollama (local), openai, anthropic, openrouter, gemini, minimax (MiniMax M1), zai (Zhipu GLM-4), codex (OpenAI Codex)"
   model:
     name: "Model"
-    description: "Model name (e.g. llama3, gpt-4o, claude-sonnet-4-20250514). Leave empty for provider default."
+    description: "Model name (e.g. llama3, gpt-4o, MiniMax-M1, glm-4-plus, codex-mini-latest). Empty = provider default."
   api_key:
     name: "API Key"
-    description: "API key for cloud LLM providers. Not needed for Ollama."
+    description: "API key for cloud providers. Not needed for Ollama."
   api_url:
     name: "API URL"
-    description: "Custom API endpoint URL. For Ollama on the same host: http://homeassistant:11434"
+    description: "Custom API URL. Ollama: http://homeassistant:11434. Empty = provider's default endpoint."
   temperature:
     name: "Temperature"
     description: "Model creativity (0.0 = deterministic, 2.0 = very creative). Default: 0.7"
   system_prompt:
     name: "System Prompt"
     description: "Custom instructions for the AI agent. Defines how it should behave."
+  fallback_provider:
+    name: "Fallback Provider"
+    description: "Backup provider if the primary fails. 'none' = no fallback."
+  fallback_model:
+    name: "Fallback Model"
+    description: "Model name for the fallback provider. Empty = fallback provider's default."
+  fallback_api_key:
+    name: "Fallback API Key"
+    description: "API key for the fallback provider."
+  fallback_api_url:
+    name: "Fallback API URL"
+    description: "Custom API URL for the fallback provider. Empty = default endpoint."
   allowed_domains:
     name: "Allowed Domains"
     description: "Entity domains the agent is allowed to control (e.g. light, switch, climate)"
