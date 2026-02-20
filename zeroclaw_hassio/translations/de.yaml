@@ -1,0 +1,48 @@
+---
+# ZeroClaw Home Assistant Add-on — Übersetzungen (Deutsch)
+configuration:
+  provider:
+    name: "LLM-Anbieter"
+    description: "KI-Modell-Anbieter (ollama für lokal, openai/openrouter/anthropic für Cloud)"
+  model:
+    name: "Modell"
+    description: "Modellname (z.B. llama3, gpt-4o, claude-sonnet-4-20250514). Leer lassen für Provider-Standard."
+  api_key:
+    name: "API-Schlüssel"
+    description: "API-Schlüssel für Cloud-LLM-Anbieter. Nicht erforderlich für Ollama."
+  api_url:
+    name: "API-URL"
+    description: "Benutzerdefinierte API-Endpunkt-URL. Für Ollama auf demselben Host: http://homeassistant:11434"
+  temperature:
+    name: "Temperatur"
+    description: "Modell-Kreativität (0.0 = deterministisch, 2.0 = sehr kreativ). Standard: 0.7"
+  system_prompt:
+    name: "System-Prompt"
+    description: "Benutzerdefinierte Anweisungen für den KI-Agenten. Definiert sein Verhalten."
+  allowed_domains:
+    name: "Erlaubte Domains"
+    description: "Entity-Domains, die der Agent steuern darf (z.B. light, switch, climate)"
+  event_listener:
+    name: "Event-Listener"
+    description: "Home Assistant Events abonnieren und den Agenten auf Zustandsänderungen reagieren lassen"
+  event_filter:
+    name: "Event-Filter"
+    description: "Zu überwachende Event-Typen (z.B. state_changed, automation_triggered)"
+  mqtt_enabled:
+    name: "MQTT aktiviert"
+    description: "MQTT-Verbindung für Echtzeit-Entity-State-Caching aktivieren"
+  mqtt_broker:
+    name: "MQTT-Broker"
+    description: "MQTT-Broker-Hostname (Standard: core-mosquitto für HA Mosquitto Add-on)"
+  mqtt_port:
+    name: "MQTT-Port"
+    description: "MQTT-Broker-Port"
+  mqtt_username:
+    name: "MQTT-Benutzername"
+    description: "MQTT-Authentifizierungsbenutzername"
+  mqtt_password:
+    name: "MQTT-Passwort"
+    description: "MQTT-Authentifizierungspasswort"
+  log_level:
+    name: "Log-Level"
+    description: "Logging-Ausführlichkeit (trace, debug, info, warn, error)"

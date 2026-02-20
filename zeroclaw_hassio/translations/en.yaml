@@ -1,0 +1,48 @@
+---
+# ZeroClaw Home Assistant Add-on — Translations (English)
+configuration:
+  provider:
+    name: "LLM Provider"
+    description: "AI model provider (ollama for local, openai/openrouter/anthropic for cloud)"
+  model:
+    name: "Model"
+    description: "Model name (e.g. llama3, gpt-4o, claude-sonnet-4-20250514). Leave empty for provider default."
+  api_key:
+    name: "API Key"
+    description: "API key for cloud LLM providers. Not needed for Ollama."
+  api_url:
+    name: "API URL"
+    description: "Custom API endpoint URL. For Ollama on the same host: http://homeassistant:11434"
+  temperature:
+    name: "Temperature"
+    description: "Model creativity (0.0 = deterministic, 2.0 = very creative). Default: 0.7"
+  system_prompt:
+    name: "System Prompt"
+    description: "Custom instructions for the AI agent. Defines how it should behave."
+  allowed_domains:
+    name: "Allowed Domains"
+    description: "Entity domains the agent is allowed to control (e.g. light, switch, climate)"
+  event_listener:
+    name: "Event Listener"
+    description: "Subscribe to Home Assistant events and let the agent react to state changes"
+  event_filter:
+    name: "Event Filter"
+    description: "Event types to listen for (e.g. state_changed, automation_triggered)"
+  mqtt_enabled:
+    name: "MQTT Enabled"
+    description: "Enable MQTT connection for real-time entity state caching"
+  mqtt_broker:
+    name: "MQTT Broker"
+    description: "MQTT broker hostname (default: core-mosquitto for HA Mosquitto add-on)"
+  mqtt_port:
+    name: "MQTT Port"
+    description: "MQTT broker port"
+  mqtt_username:
+    name: "MQTT Username"
+    description: "MQTT authentication username"
+  mqtt_password:
+    name: "MQTT Password"
+    description: "MQTT authentication password"
+  log_level:
+    name: "Log Level"
+    description: "Logging verbosity (trace, debug, info, warn, error)"

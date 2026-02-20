@@ -1,0 +1,40 @@
+#include <tunables/global>
+
+profile zeroclaw flags=(attach_disconnected,mediate_deleted) {
+  #include <abstractions/base>
+
+  # Network access (required for HA Supervisor API, LLM providers, MQTT)
+  network inet stream,
+  network inet dgram,
+  network inet6 stream,
+  network inet6 dgram,
+
+  # DNS resolution
+  /etc/resolv.conf r,
+  /etc/hosts r,
+  /etc/nsswitch.conf r,
+
+  # SSL/TLS certificates
+  /etc/ssl/** r,
+  /usr/share/ca-certificates/** r,
+
+  # Binary execution
+  /usr/bin/zeroclaw ix,
+
+  # Add-on data directory
+  /data/** rwk,
+
+  # Shared HA directories (mapped volumes)
+  /config/** rwk,
+  /share/** rwk,
+  /ssl/** r,
+
+  # Proc/sys for basic runtime
+  /proc/sys/net/** r,
+  /proc/self/** r,
+
+  # Deny everything else by default (HA add-on standard)
+  deny /proc/** w,
+  deny /sys/** w,
+  deny /dev/** rw,
+}
