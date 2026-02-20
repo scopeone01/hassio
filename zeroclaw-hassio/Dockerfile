@@ -2,10 +2,13 @@
 # ZeroClaw Home Assistant Add-on — Dockerfile
 # ────────────────────────────────────────────────────────────────────
 # Python-based smart home AI agent. Builds in ~30 seconds.
+# Uses standard HA add-on build pattern: BUILD_FROM from build.json
 # ────────────────────────────────────────────────────────────────────
 
-FROM python:3.12-slim
+ARG BUILD_FROM
+FROM ${BUILD_FROM}
 
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl jq && \
     rm -rf /var/lib/apt/lists/*
@@ -14,7 +17,7 @@ WORKDIR /app
 
 # Install Python dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --break-system-packages -r requirements.txt
 
 # Copy application
 COPY server.py .
@@ -32,6 +35,6 @@ LABEL \
     io.hass.description="Autonomous AI agent for Home Assistant" \
     io.hass.arch="amd64|aarch64" \
     io.hass.type="addon" \
-    io.hass.version="0.2.0"
+    io.hass.version="0.2.1"
 
 CMD ["python3", "server.py"]
