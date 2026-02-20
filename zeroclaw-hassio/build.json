@@ -1,8 +1,4 @@
 {
   "squash": false,
-  "build_from": {
-    "amd64": "python:3.12",
-    "aarch64": "python:3.12"
-  },
   "args": {}
 }
