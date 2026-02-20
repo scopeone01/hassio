@@ -1,6 +1,4 @@
 {
   "squash": false,
-  "args": {
-    "CACHE_BUST": "20260220_v8"
-  }
+  "args": {}
 }
